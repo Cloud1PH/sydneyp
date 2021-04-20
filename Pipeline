@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'Github', url: 'https://github.com/Cloud1PH/sydneyp.git'
+            }
+        }
+        stage('Copy Provider') {
+            steps {
+                sh 'sudo cp /AzureProvider/provider.tf provider.tf'
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+                sh 'sudo terraform init'
+            }
+        }
+        stage('Terraform Plan') {
+            steps {
+                sh 'sudo terraform plan'
+            }
+        }
+        stage('Terraform Apply') {
+            steps {
+                sh 'sudo terraform apply --auto-approve'
+            }
+        }
+        stage("Waiting for Test Output") {
+            options {
+                timeout(time: 10, unit: "HOURS")
+            }
+            steps {
+                echo "Azure RG will be destroyed in 8 working hours"
+                sleep(time: 8, unit: "HOURS")
+            }
+        }
+        stage('Remove RG - Terraform Destroy') {
+            steps {
+                sh 'sudo terraform destroy --auto-approve'
+            }
+        }
+    }
+}
